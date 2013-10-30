@@ -1,0 +1,95 @@
+#!/usr/bin/python
+#-*- coding: UTF-8 -*-
+
+import logging
+import hashlib
+from django.db import models
+from mysite.mmanapp.lib.logic import str2dict
+
+MODEL_APP_NAME = "mmanapp"
+
+    return hash
+
+def get_upload_path(path_prefix):
+    ''' 根据指定的路径前缀，返回一个路径处理函数 '''
+    def get_upload_path_(instance, filename):
+        prefix = path_prefix
+        hash = hashlib.new('md5')
+        name = hash.update(filename).hexdigest().encode("UTF-8")
+        instance.filename = filename.encode("UTF-8")
+        date = datetime.datetime.now().strftime("%Y%m")
+        return "%(prefix)s/%(date)s/%(name)s" % vars()
+    return get_upload_path_
+
+
+#user
+class MManUser(models.Model):
+    name    = models.CharField(primary_key=True,max_length=128, db_index=True)
+    pwd     = models.CharField(max_length=128)
+    avatar = models.FileField(upload_to=get_upload_path("avatar/"))
+    filename = models.CharField(max_length=512)
+
+    mail    = models.EmailField()
+
+    upload_pics_size = models.IntegerField()
+    reg_time = models.DateTimeField(auto_now=True, default=datetime.datetime.now)
+    last_login = models.DateTimeField()
+    last_exit = models.DateTimeField()
+    money  = models.IntegerField()
+
+    class Meta:
+        app_label = MODEL_APP_NAME
+        unique_together = (("name"),("mail"))
+        pass
+
+    def __unicode__(self):
+        return unicode(self.name)
+
+class MManPic(models.Model):
+    pic_id   = models.CharField(primary_key=True)
+    user = models.ForeignKey(MManUser,blank=True,null=True)
+    s_filedata = models.FileField(upload_to=get_upload_path("small/"))
+    m_filedata = models.FileField(upload_to=get_upload_path("mid/"))
+    b_filedata = models.FileField(upload_to=get_upload_path("big/"))
+    name = models.CharField(max_length=128)
+    desc  = models.CharField(max_length=512)
+    filename = models.CharField(max_length=512)
+    comments_num = models.IntegerField(default=0)
+    like_num = models.IntegerField(default=0)
+    info = models.TextField(blank=True,null=True)
+    time = models.DateTimeField(auto_now=True, default=datetime.datetime.now)
+
+    class Meta:
+        app_label = MODEL_APP_NAME
+        unique_together = (("pic_id"))
+        ordering = ['pic_id','like_num','comments_num']
+        pass
+    def __unicode__(self):
+        return  unicode(pic_id)
+
+    def get_info(self):
+        return str2dict(self.info)
+
+    def __getattr__(self, name):
+        info = self.get_info()
+        if name in info:
+            return info[name]
+        elif hasattr(self, "_default_info") and name in self._default_info:
+            logging.info("[%d] getattr from default_info" %self.pic_id)
+            return self._default_info[name]
+        raise AttributeError(name)
+
+
+class MManComment(models.Model):
+    user = models.ForeginKey(MManUser)
+    pic = models.FileField(MManPic)
+    time = models.DateTimeField(auto_now=True, default=datetime.datetime.now)
+    content = models.TextField(max_length=512)
+
+    class Meta:
+        app_label = MODEL_APP_NAME
+        ordering = ['id','time']
+        pass
+    def __unicode__(self):
+        return  unicode(self.content)
+

@@ -1,0 +1,244 @@
+#!/usr/bin/python
+#-*- coding: UTF-8 -*-
+
+import sys, os
+
+# 设置系统运行模式
+#   "default"   为正式环境
+#   "develop"   为开发环境
+#   "test"      为测试环境
+SYSTEM_MODE = "develop"
+
+DATABASES = {
+    # 开发环境 DB 配置
+    'develop': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'develop.db',
+    },
+    # 单元测试环境 DB 配置
+    'unittest': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'unittest.db',
+    },
+}
+
+# 设置是否为侠盗模式
+#   如果设置为True，那么用户就可以跳过外网发布步骤
+IS_HERO_MODE = False
+
+# =================  以下配置可以不用修改 =========
+# 开启ars文件同步功能
+ENABLE_ARS=False
+
+# 开启py_mmagent的文件传输功能
+ENABLE_AGENT=False
+
+# 开启CC的功能(当禁用时，使用假数据替代)
+ENABLE_CC=True
+
+# 开启GS的功能(当禁用时，使用假数据替代)
+ENABLE_GS=False
+
+#开启发布IDC的功能（当禁用时，无法同步文件到外网）
+ENABLE_IDC=False
+
+# 开启DEBUG模式
+DEBUG = True
+# 开启模板渲染调试
+TEMPLATE_DEBUG = True
+# 设置是否当前为测试环境(将激活使用所有子系统的测试HOST)
+IS_DEVELOP = True
+
+# 设置导入素材文件时的来源IP
+IMG_SRC_IP = u'10.185.20.233'
+
+# 禁用OA登录检测，始终默认为以下用户
+#FAKE_USER = ('rexliao', 8000)
+
+# 禁用CC，使用使用假数据
+#FAKE_CC = True
+
+ADMINS = (
+        ('rexliao', 'rexliao@tencent.com'),
+        ('tylerwei', 'tylerwei@tencent.com'),
+)
+
+MANAGERS = ADMINS
+
+APP_DIR = os.path.dirname( os.path.abspath( __file__ ) )
+BASE_DIR = os.path.dirname( APP_DIR )
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# CC API base url
+CCAPI_NEW = "http://aos.isd.com/cc3/cc/ccInterface.api.php"
+CCAPI_OLD = "http://aos.isd.com/cc3/cc/mmap.php"
+
+#Garcia API url
+GSAPI_URL = 'http://10.149.30.10/cgi-bin/cgi_garcia'
+
+# detect unittest mode
+if 'test' in sys.argv:
+    SYSTEM_MODE = "unittest"
+
+# 'default' 为正式环境
+if SYSTEM_MODE == "default":
+    DEBUG = False
+    IS_HERO_MODE = False
+    IS_DEVELOP = False
+
+# Auto set the DB
+if SYSTEM_MODE in DATABASES:
+    BAK_DATABASES = DATABASES
+    DATABASES = { 'default': BAK_DATABASES[SYSTEM_MODE]}
+else:
+    raise Exception, "SYSTEM_MODE[%s] is error. Available options is:\n    %s" % ( SYSTEM_MODE , ", ".join(DATABASES.keys()) )
+
+# 目前版本的大版本号前缀URL
+VERSION_URL="/v3"
+
+# Local time zone for this installation. Choices can be found here:
+# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
+# although not all choices may be available on all operating systems.
+# On Unix systems, a value of None will cause Django to use the same
+# timezone as the operating system.
+# If running in a Windows environment this must be set to the same as your
+# system time zone.
+#TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'Asia/Shanghai'
+TIME_FORMAT = 'Y-m-d H:i:s'
+DATETIME_FORMAT = 'Y-m-d H:i:s'
+
+# Language code for this installation. All choices can be found here:
+# http://www.i18nguy.com/unicode/language-identifiers.html
+#LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-CN'
+
+SITE_ID = 1
+
+# If you set this to False, Django will make some optimizations so as not
+# to load the internationalization machinery.
+USE_I18N = True
+
+# If you set this to False, Django will not format dates, numbers and
+# calendars according to the current locale
+USE_L10N = True
+
+# Absolute path to the directory that holds media.
+# Example: "/home/media/media.lawrence.com/"
+MEDIA_ROOT = BASE_DIR + '/upload/'
+
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash if there is a path component (optional in other cases).
+# Examples: "http://media.lawrence.com", "http://example.com/media/"
+MEDIA_URL = VERSION_URL+'/db_file/'
+
+# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
+# trailing slash.
+# Examples: "http://foo.com/media/", "/media/".
+ADMIN_MEDIA_PREFIX = VERSION_URL+'/admin_media/'
+
+SITE_MEDIA_ROOT = APP_DIR + '/media/'
+SITE_MEDIA_URL = VERSION_URL+'/m/'
+SITE_BASE_URL = VERSION_URL+'/'
+ 
+# Make this unique, and don't share it with anybody.
+SECRET_KEY = 'hh6aiub(bdx^azp8x9f1=$4w^ybtd$t28zgl!j66fz1&y)ww+^'
+
+# List of callables that know how to import templates from various sources.
+TEMPLATE_LOADERS = (
+    'django.template.loaders.app_directories.Loader',
+    'django.template.loaders.filesystem.Loader',
+    #'django.template.loaders.eggs.Loader',
+)
+
+MIDDLEWARE_CLASSES = (
+    'mysite.mmanapp.middlewares.LogRequestTime',
+    'mysite.mmanapp.middlewares.CommonStat',
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    #'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    #'mysite.mmanapp.middlewares.BugMail',
+    'mysite.mmanapp.middlewares.BugStat',
+)
+
+ROOT_URLCONF = 'mysite.urls'
+
+TEMPLATE_DIRS = (
+        APP_DIR + "/templates/",
+        APP_DIR + "/mmanapp/templates/",
+        #"/home/dantezhu/release/dgwww/mysite/template/",
+        # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+        # Always use forward slashes, even on Windows.
+        # Don't forget to use absolute paths, not relative paths.
+        )
+
+INSTALLED_APPS = (
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.sites',
+        'django.contrib.messages',
+        # Uncomment the next line to enable the admin:
+        'django.contrib.admin',
+        'mysite.mmanapp',
+        'south',
+        #'devserver',   # 这个是开发辅助debug server
+        )
+
+DEVSERVER_IGNORED_PREFIXES = [ MEDIA_URL, ADMIN_MEDIA_PREFIX, SITE_MEDIA_URL]
+
+DEVSERVER_MODULES = (
+    #'devserver.modules.sql.SQLRealTimeModule',
+    'devserver.modules.sql.SQLSummaryModule',
+    'devserver.modules.profile.ProfileSummaryModule',
+
+    # Modules not enabled by default
+    #'devserver.modules.ajax.AjaxDumpModule',
+    #'devserver.modules.cache.CacheSummaryModule',
+    'devserver.modules.profile.MemoryUseModule',
+    'devserver.modules.profile.LineProfilerModule',
+)
+
+# Logger defines
+# =============================================
+import logging
+from logging.handlers  import RotatingFileHandler
+LOG_FORMAT = '%(asctime)s %(levelname)-6s %(filename)-12s +%(lineno)-4d %(message)s'
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT,
+        filename= BASE_DIR + '/log/log.txt', filemode="a+")
+
+def get_handler(filename):
+    return RotatingFileHandler(filename, mode="a+",
+            maxBytes=10*1024*1024, backupCount=9)
+
+def init_logger(tag, level):
+    formatter = logging.Formatter(LOG_FORMAT)
+    new_handler = get_handler(BASE_DIR+'/log/%s-log.txt'%tag)
+    new_handler.setFormatter(formatter)
+    new_logger = logging.getLogger(tag)
+    new_logger.setLevel(level)
+    new_logger.addHandler(new_handler)
+
+init_logger('ars', logging.INFO)    # 分离 ARS 相关 log
+init_logger('sync', logging.INFO)   # 分离同步相关log
+init_logger('db', logging.DEBUG)    # 分离同步相关log
+init_logger('cdn', logging.DEBUG)   # 分离同步相关log
+init_logger('stat', logging.DEBUG)   # 分离同步相关log
+init_logger('seqclose', logging.DEBUG)   # 分离同步相关log
+init_logger('stat_request', logging.DEBUG)   # 分离同步相关log
+logging.getLogger("suds").setLevel(logging.WARNING)
+
+if 'test' in sys.argv:
+    logging.getLogger('ars').setLevel(logging.CRITICAL)
+    logging.getLogger('sync').setLevel(logging.CRITICAL)
+    logging.getLogger('db').setLevel(logging.CRITICAL)
+    logging.getLogger('cdn').setLevel(logging.CRITICAL)
+    logging.getLogger('stat').setLevel(logging.CRITICAL)
+    logging.getLogger('seqclose').setLevel(logging.CRITICAL)
+    logging.getLogger('stat_request').setLevel(logging.CRITICAL)
+    logging.getLogger().setLevel(logging.CRITICAL)
+
+
